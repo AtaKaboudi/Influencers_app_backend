@@ -1,27 +1,7 @@
-require('dotenv').config()
 
-// SQL Config and  Connection
-const db = mysql.createConnection({
-    host : process.env.DATABASE_HOST,
-    user : process.env.DATABASE_USER,
-    password : process.env.DATABASE_PASSWORD ,
-    // check ENV
-    database : 'bachto',                                               
+require('dotenv').config({path: "./.env"})
 
-})
-db.connect((err)=>{
-  const prompt = err ? err : "MYSQL Connected"
-    console.log(prompt);
-})
-
-
-
-
-
-function checkUserExists (id) {
-
-}
-
+const jwt = require ('jsonwebtoken')
 
 
 
@@ -30,7 +10,6 @@ function checkUserExists (id) {
 
 
     //TOKEN VERIF
-
 function authentificateToken (req,res,next) {
     const authHeader = req.headers['authorization']
     const token = authHeader && authHeader.split(' ')[1]
@@ -45,3 +24,8 @@ function authentificateToken (req,res,next) {
 
 
 
+
+module.exports = {
+    authentificateToken,
+
+}

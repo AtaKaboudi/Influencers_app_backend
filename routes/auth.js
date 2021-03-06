@@ -4,6 +4,7 @@ const express =require ('express')
 const router = express.Router() 
 const mysql = require('mysql')
 const jwt = require ('jsonwebtoken')
+const authController = require('../controllers/auth.js')
 
 // databse conenct 
 
@@ -14,12 +15,11 @@ const db = mysql.createConnection({
     database : process.env.DATABASE_NAME,     
 
 })
-/*
+
 db.connect((err)=>{
   const prompt = err ? err : "MYSQL Connected"
     console.log(prompt);
 })
-*/
 
 
 
@@ -28,7 +28,7 @@ router.post('/register',(req,res)=>{
        
     const {first_name,last_name,brand_name,email,birthdate,user_password,user_cin,num_societe,user_role,user_bio,user_gender,phone_number,creation_date}= req.body; 
    
-   
+ 
     db.query("SELECT * FROM "+ process.env.DATABASE_USER_TABLE+" WHERE email =  ?" , email,(err,resu)=>{
     
         if(err) {
@@ -39,6 +39,8 @@ router.post('/register',(req,res)=>{
     if(resu.length > 0){
          return   res.send("Email taken");
     }
+
+    
 
                 db.query('INSERT into '+process.env.DATABASE_USER_TABLE+'SET ?', {
                     //// ADD ID GENERATOR IF EXISTS
@@ -58,12 +60,17 @@ router.post('/register',(req,res)=>{
 
                 },(err,resu)=>{
                     if(err) return  console.log(err);
-                    else res.send("Succesfful auth");
+                    else res.send("Succesfful Registry");
                 })
 
-})
+                
+    })
 
 })
+
+
+
+
 
 
 
