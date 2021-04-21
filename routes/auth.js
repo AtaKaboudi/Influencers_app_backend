@@ -5,9 +5,11 @@ const router = express.Router()
 const mysql = require('mysql')
 const jwt = require ('jsonwebtoken')
 const authController = require('../controllers/auth.js')
+require('dotenv').config({path: "../.env"})
+const {check ,validationResult} = require ('express-validator/check')
+const bcrypt = require('bcrypt')
 
-// databse conenct 
-
+//connect to database 
 const db = mysql.createConnection({
     host : process.env.DATABASE_HOST,
     user : process.env.DATABASE_USER,
@@ -17,39 +19,47 @@ const db = mysql.createConnection({
 })
 
 db.connect((err)=>{
-  const prompt = err ? err : "MYSQL Connected"
+    const prompt = err ? err : "MYSQL Connected"
     console.log(prompt);
 })
 
 
 
+router.post('/register',[check('email').isEmail()],  async (req,res)=>{
 
-router.post('/register',(req,res)=>{
-       
-    const {first_name,last_name,brand_name,email,birthdate,user_password,user_cin,num_societe,user_role,user_bio,user_gender,phone_number,creation_date}= req.body; 
+    const errors = validationResult(req);
+    if(!errors.isEmpty()){
+        res.json({'error': "INVALID_EMAIL_TYPE"})
+        return;
+    }
+
+    const {first_name,last_name,brand_name,email,birthdate,user_password,user_cin,num_societe,user_role,user_bio,user_gender,phone_number,creation_date} = req.body; 
+  
+  
+
    
- 
-    db.query("SELECT * FROM "+ process.env.DATABASE_USER_TABLE+" WHERE email =  ?" , email,(err,resu)=>{
+
+   await db.query("SELECT * FROM "+ process.env.DATABASE_USER_TABLE+" WHERE email =  ?" ,[email], async (err,resu)=>{
     
         if(err) {
-         console.log(err)
-         return ;
+            res.json({'error': err});
+            return ;
     }
 
     if(resu.length > 0){
-         return   res.send("Email taken");
+         return   res.json({'error' : "Email taken"});
     }
 
-    
 
-                db.query('INSERT into '+process.env.DATABASE_USER_TABLE+'SET ?', {
+
+               await db.query('INSERT into '+process.env.DATABASE_USER_TABLE+' SET ?', {
                     //// ADD ID GENERATOR IF EXISTS
                         first_name : first_name,
                         last_name : last_name ,
                         email : email , 
                         brand_name :brand_name ,
                         birthdate : birthdate ,
-                        user_password : user_password  ,                                                                    //add hash code
+                        user_password :  bcrypt.hashSync(user_password,12) ,                                   //add hash code
                         user_cin : user_cin ,
                         num_societe : num_societe,
                         user_role : user_role ,
@@ -59,7 +69,7 @@ router.post('/register',(req,res)=>{
                         creation_date : creation_date,
 
                 },(err,resu)=>{
-                    if(err) return  console.log(err);
+                    if(err) return  res.json({'error': err});
                     else res.send("Succesfful Registry");
                 })
 
@@ -74,33 +84,31 @@ router.post('/register',(req,res)=>{
 
 
 
-router.post('/login',(req,res)=>{
+router.post('/login',[check('email').isEmail()], async (req,res)=>{
+
+    const errors = validationResult(req);
+    if(!errors.isEmpty()){
+        res.json({'error': "INVALID_EMAIL_TYPE"})
+        return;
+    }
+
 
         let {email , user_password}= req.body ;
-
-        /// CHECK LOGIN ON EMAIL and PASSWOR ?
-        db.query('SELECT * FROM '+process.env.DATABASE_USER_TABLE+' WHERE email =  ?', [email],(err,resu)=>{
+        await db.query('SELECT * FROM '+process.env.DATABASE_USER_TABLE+' WHERE email =  ?', [email], async (err,resu)=>{
             if(err){
-              return  console.log(err)
+              return  res.json({'error': err});
             }
             if(resu.length == 0 ){
-                return res.send(' Invalid Mail')
+                return res.json( {'error': "Email not found"})
             }
-            db.query('SELECT * FROM '+process.env.DATABASE_USER_TABLE+' WHERE user_password =  ?', [user_password],(err,resu)=>{
-           
-              if(err){
-                  return console.log(err)
-              }
-              if(resu.length == 0){
-                  return res.send('Check your Password');
-              }
-                
-                const accessToken =  jwt.sign({user_id : resu.user_id} , process.env.ACCESS_TOKEN_SECRET)
+
+            if(!bcrypt.compareSync( user_password,resu[0].user_password)) {
+                res.json({"error":"PASSWORD_NOT_FOUND"})
+                return;
+            }
+            
+            const accessToken =  jwt.sign({user_id : resu.user_id} , process.env.ACCESS_TOKEN_SECRET)
             res.json({accessToken : accessToken});
-            })
-
-
-
 
         })
 

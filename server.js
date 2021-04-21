@@ -3,15 +3,14 @@
 const express = require ('express')
 const app = express()
 const authController = require ('./controllers/auth.js')
+const bodyparser = require('body-parser');
+const expressValidator = require ('express-validator');
 
 
-app.use(express.json())
 
-app.use(express.json())
-
-
-//JSON access
+//Body access
 app.use (express.urlencoded({extended: false}))
+app.use(express.json());
 
 //Define Routes 
 app.use('/auth',require('./routes/auth.js'));
@@ -33,3 +32,11 @@ app.get('/test',(req,res)=>{
 
 
 app.listen(process.env.PORT);
+
+
+/*
+retour function / rs.send json error
+ vefification id  id in token 
+creation de campgnie
+POST GET DELETE
+*/
