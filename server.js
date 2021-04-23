@@ -22,6 +22,7 @@ app.use ('/profile',authController.authentificateToken ,require('./routes/profil
 
 
 app.get('/test',(req,res)=>{
+    res.send('a');
     console.log(req.user);
 })
 

@@ -19,7 +19,7 @@ const db = mysql.createConnection({
 })
 
 db.connect((err)=>{
-    const prompt = err ? err : "MYSQL Connected"
+    const prompt = err ? err.code : "MYSQL Connected"
     console.log(prompt);
 })
 
@@ -106,9 +106,8 @@ router.post('/login',[check('email').isEmail()], async (req,res)=>{
                 res.json({"error":"PASSWORD_NOT_FOUND"})
                 return;
             }
-            
-            const accessToken =  jwt.sign({user_id : resu.user_id} , process.env.ACCESS_TOKEN_SECRET)
-            res.json({accessToken : accessToken});
+            const accessToken =  jwt.sign({ user_id :  resu[0].user_id} , process.env.ACCESS_TOKEN_SECRET)
+            res.json({"accessToken" : accessToken});
 
         })
 
