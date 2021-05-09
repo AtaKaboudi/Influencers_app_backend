@@ -15,16 +15,10 @@ app.use(express.json());
 //Define Routes 
 app.use('/auth',require('./routes/auth.js'));
 app.use ('/profile',authController.authentificateToken ,require('./routes/profile.js'));
+app.use ('/campaign',authController.authentificateToken ,require('./routes/campain.js'));
 
 
 
-
-
-
-app.get('/test',(req,res)=>{
-    res.send('a');
-    console.log(req.user);
-})
 
 
 

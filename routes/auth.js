@@ -25,6 +25,9 @@ db.connect((err)=>{
 
 
 
+
+
+
 router.post('/register',[check('email').isEmail()],  async (req,res)=>{
 
     const errors = validationResult(req);
@@ -110,8 +113,6 @@ router.post('/login',[check('email').isEmail()], async (req,res)=>{
             res.json({"accessToken" : accessToken});
 
         })
-
-   
 })
 
 

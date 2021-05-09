@@ -21,8 +21,7 @@ db.connect((err)=>{
 
 
 router.get('/getAll', async (req,res)=>{
-    if(! req.body.user_id) return res.json({"error" : "WRONG_REQUEST_FORMAT"});
-    console.log(req.body);
+    if(!req.body.user_id) return res.json({"error" : "WRONG_REQUEST_FORMAT"});
 
    await db.query('SELECT * FROM '+process.env.DATABASE_USER_TABLE+' WHERE user_id = ? ',req.body.user_id,(err,resu)=>{
        if(err) return res.send(err.code) 
@@ -33,13 +32,7 @@ router.get('/getAll', async (req,res)=>{
 
 })
 
-/*
-    getAttribute : 
-    body : { 
-        user_id : 1 , 
-        attribute : first_name
-    }
-*/
+
 
 router.get('/getAttributes/', async (req,res)=>{
 
@@ -54,12 +47,6 @@ router.get('/getAttributes/', async (req,res)=>{
 })
 
 
- /* modify  : 
-    
-post  https : ..... /modify/firstname 
-    Req body : {user_id : 1=2 , new_value : "ata"}
-
- */
 router.post('/modify/:attribute',async (req,res)=>{
     let attributeToChange = req.params.attribute ;
     await db.query('UPDATE '+process.env.DATABASE_USER_TABLE+' SET '+ attributeToChange +'= "' + req.body.new_value +'" WHERE user_id = '+ req.body.user_id);
