@@ -1,82 +1,30 @@
-require('dotenv').config({path: "./.env"})
-
 const express =require ('express')
 const router = express.Router() 
-const mysql = require('mysql')
 const jwt = require ('jsonwebtoken')
-const authController = require('../controllers/auth.js')
-require('dotenv').config({path: "../.env"})
 const {check ,validationResult} = require ('express-validator/check')
 const bcrypt = require('bcrypt')
-
-//connect to database 
-const db = mysql.createConnection({
-    host : process.env.DATABASE_HOST,
-    user : process.env.DATABASE_USER,
-    password : process.env.DATABASE_PASSWORD ,
-    database : process.env.DATABASE_NAME,     
-
-})
-
-db.connect((err)=>{
-    const prompt = err ? err.code : "MYSQL Connected"
-    console.log(prompt);
-})
+const db = require('../controllers/database')
+const { ErrorHandler } = require('../controllers/error.js')
 
 
 
 
-
-
-router.post('/register',[check('email').isEmail()],  async (req,res)=>{
+router.post('/register',[check('email').isEmail()],  async (req,res,next)=>{
 
     const errors = validationResult(req);
-    if(!errors.isEmpty()){
-        res.json({'error': "INVALID_EMAIL_TYPE"})
-        return;
-    }
-
-    const {first_name,last_name,brand_name,email,birthdate,user_password,user_cin,num_societe,user_role,user_bio,user_gender,phone_number,creation_date} = req.body; 
-  
-  
-
-   
-
-   await db.query("SELECT * FROM "+ process.env.DATABASE_USER_TABLE+" WHERE email =  ?" ,[email], async (err,resu)=>{
+    if(!errors.isEmpty()) return next(new ErrorHandler(403,"INVALID_ARGUMENT_FORMAT"))
     
-        if(err) {
-            res.json({'error': err});
-            return ;
-    }
 
-    if(resu.length > 0){
-         return   res.json({'error' : "Email taken"});
-    }
+   await db.user.queryEmail(req.body, async (err,resu)=>{
+    
+        if(err) return next(new ErrorHandler(500,err.message));
+        if(resu.length > 0) return next(new ErrorHandler(401,'EMAIL_TAKEN'))
 
 
-
-               await db.query('INSERT into '+process.env.DATABASE_USER_TABLE+' SET ?', {
-                    //// ADD ID GENERATOR IF EXISTS
-                        first_name : first_name,
-                        last_name : last_name ,
-                        email : email , 
-                        brand_name :brand_name ,
-                        birthdate : birthdate ,
-                        user_password :  bcrypt.hashSync(user_password,12) ,                                   //add hash code
-                        user_cin : user_cin ,
-                        num_societe : num_societe,
-                        user_role : user_role ,
-                        user_bio : user_bio,
-                        user_gender : user_gender,
-                        phone_number : phone_number ,
-                        creation_date : creation_date,
-
-                },(err,resu)=>{
-                    if(err) return  res.json({'error': err});
-                    else res.send("Succesfful Registry");
-                })
-
-                
+               await db.user.insert(req.body, (err,resu)=>{
+                    if(err) next(new Error(500,err.message))
+                    else res.status(200).send({"status":"success","message" : "Succesfful Registry"});
+                })       
     })
 
 })
@@ -87,30 +35,25 @@ router.post('/register',[check('email').isEmail()],  async (req,res)=>{
 
 
 
-router.post('/login',[check('email').isEmail()], async (req,res)=>{
+router.post('/login',[check('email').isEmail()], async (req,res,next)=>{
 
     const errors = validationResult(req);
-    if(!errors.isEmpty()){
-        res.json({'error': "INVALID_EMAIL_TYPE"})
-        return;
-    }
+    if(!errors.isEmpty()) return next(new ErrorHandler(422,"INVALID_ARGUMENT_FORMAT"))
+      
 
 
-        let {email , user_password}= req.body ;
-        await db.query('SELECT * FROM '+process.env.DATABASE_USER_TABLE+' WHERE email =  ?', [email], async (err,resu)=>{
-            if(err){
-              return  res.json({'error': err});
-            }
-            if(resu.length == 0 ){
-                return res.json( {'error': "Email not found"})
+        await db.user.queryEmail({email: req.body.email}, (err,resu)=>{
+
+            if(err) return next(new ErrorHandler(500,err.message));
+            if(resu.length == 0) return next(new ErrorHandler(403,'INVALID_EMAIL'))
+            
+
+            if(!bcrypt.compareSync( req.body.user_password,resu.user_password)) {
+                return  next(new ErrorHandler(403,'INVALID_PASSWORD'))
             }
 
-            if(!bcrypt.compareSync( user_password,resu[0].user_password)) {
-                res.json({"error":"PASSWORD_NOT_FOUND"})
-                return;
-            }
-            const accessToken =  jwt.sign({ user_id :  resu[0].user_id} , process.env.ACCESS_TOKEN_SECRET)
-            res.json({"accessToken" : accessToken});
+            const accessToken =  jwt.sign({ user_id :  resu.user_id, user_role : resu.user_role } , process.env.ACCESS_TOKEN_SECRET)
+            res.status(201).json({"accessToken" : accessToken});
 
         })
 })

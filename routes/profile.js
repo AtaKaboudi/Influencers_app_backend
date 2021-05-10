@@ -4,61 +4,51 @@ const router = express.Router()
 require('dotenv').config({path: "./.env"})
 const mysql  =require ('mysql')
 const auth = require ('../controllers/auth')
-
-const db = mysql.createConnection({
-    host : process.env.DATABASE_HOST,
-    user : process.env.DATABASE_USER,
-    password : process.env.DATABASE_PASSWORD ,
-    database : process.env.DATABASE_NAME,     
-
-})
-
-db.connect((err)=>{
-    const prompt = err ? err.code : "MYSQL Connected"
-    console.log(prompt);
-})
+const { ErrorHandler } = require('../controllers/error')
+const db = require('../controllers/database')
 
 
 
-router.get('/getAll', async (req,res)=>{
-    if(!req.body.user_id) return res.json({"error" : "WRONG_REQUEST_FORMAT"});
+router.get('/profile', async (req,res,next)=>{
+    if(!req.body.user_id) return next(new ErrorHandler(400,"INVALID_ARGUMENT_FORMAT"))
 
-   await db.query('SELECT * FROM '+process.env.DATABASE_USER_TABLE+' WHERE user_id = ? ',req.body.user_id,(err,resu)=>{
-       if(err) return res.send(err.code) 
-       if(resu.length != 1) return res.send("CHECK ID")
-        res.json(resu);
-    } )
-    console.log('[Profile] GET ALL id: '+ req.body.user_id)
+   await db.profile.queryId ({user_id: req.body.user_id},(err,resu)=>{
+       if(err) return next(new ErrorHandler(500,err.message));
+        res.status(200).json(resu);
+    })
 
 })
 
 
 
-router.get('/getAttributes/', async (req,res)=>{
+router.get('/profile/:attribute', async (req,res,next)=>{
 
-    await db.query('SELECT '+req.body.attribute+' FROM '+process.env.DATABASE_USER_TABLE+' WHERE user_id = ? ',req.body.user_id,(err,resu)=>{
-        if(err) return res.json({"error": err})
-        if(resu.length != 1) return res.send("CHECK ID")
-         res.json(resu);
-     } )
+    await db.profile.queryAttribute({user_id: req.body.user_id,attribute : req.params.attribute},(err,resu)=>{
+        if(err) return next(new ErrorHandler(500,err.message));
+         res.status(200).json(resu);
+     })
 
-     console.log('[Profile] GET '+ req.body.attribute +' '+ req.body.user_id)
 
 })
 
 
-router.post('/modify/:attribute',async (req,res)=>{
-    let attributeToChange = req.params.attribute ;
-    await db.query('UPDATE '+process.env.DATABASE_USER_TABLE+' SET '+ attributeToChange +'= "' + req.body.new_value +'" WHERE user_id = '+ req.body.user_id);
-    console.log('[Profile] UPDATE '+ req.params.attribute+' '+ req.body.user_id)
+router.put('/profile/:attribute',async (req,res,next)=>{
+    console.log(req.body);
+    if(!req.body.value) return next(new ErrorHandler(400,"INVALID_ARGUMETN_FORMAT"));
+    
+    req.body.attribute = req.params.attribute;
+    await db.profile.updateAttribute(req.body,(err,resu)=>{
+        if(err) return next(new ErrorHandler(500,err.message));
+        res.status(200).json({"status" :"success", "message":"successful update"});
+    });
 
 })
 
-router.post('/delete',async (req,res)=>{
-
-   await db.query('DELETE '+process.env.DATABASE_USER_TABLE+' WHERE user_id = '+ req.body.user_id); 
-    console.log('[Profile] DELETE '+ req.body.user_id)
-
+router.delete('/profile',async (req,res,next)=>{
+    await db.profile.deleteProfile(req.body,(err,resu)=>{
+        if(err) return next(new ErrorHandler(500,err.message));
+        res.status(200).json({"status" :"success", "message":"successful delete"});
+    }); 
 })
 
 

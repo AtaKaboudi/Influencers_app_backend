@@ -4,8 +4,7 @@ const express = require ('express')
 const app = express()
 const authController = require ('./controllers/auth.js')
 const bodyparser = require('body-parser');
-const expressValidator = require ('express-validator');
-
+const {handleError} = require('./controllers/error')
 
 
 //Body access
@@ -15,9 +14,10 @@ app.use(express.json());
 //Define Routes 
 app.use('/auth',require('./routes/auth.js'));
 app.use ('/profile',authController.authentificateToken ,require('./routes/profile.js'));
-app.use ('/campaign',authController.authentificateToken ,require('./routes/campain.js'));
+app.use ('/campaign',authController.authentificateToken ,require('./routes/campaign.js'));
 
 
+app.use(handleError);
 
 
 
