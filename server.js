@@ -29,9 +29,3 @@ app.use(handleError);
 app.listen(process.env.PORT);
 
 
-/*
-retour function / rs.send json error
- vefification id  id in token 
-creation de campgnie
-POST GET DELETE
-*/

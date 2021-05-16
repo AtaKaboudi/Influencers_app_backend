@@ -18,7 +18,7 @@ db.connect((err)=>{
 var user = {
     queryEmail(params,callback){
          db.query("SELECT * FROM "+ process.env.DATABASE_USER_TABLE+" WHERE email =  ?" ,[params.email], async (err,resu)=>{
-            callback(err,resu[0])
+           callback(err,resu[0])
         })
     }
     ,
@@ -69,7 +69,7 @@ var profile = {
     }
     ,
     deleteProfile(params,callback){
-         db.query('DELETE  '+process.env.DATABASE_USER_TABLE+' WHERE user_id = '+ params.user_id,(err,resu)=>{
+         db.query('DELETE  FROM'+process.env.DATABASE_USER_TABLE+' WHERE user_id = '+ params.user_id,(err,resu)=>{
             callback(err,resu);
          }); 
 
@@ -78,9 +78,47 @@ var profile = {
 
 var campaign = {
     queryID (params,callback){
-        db.query("SELECT * FROM "+ process.env.DATABASE_CAMPAIGN_TABLE+" WHERE email =  ?" ,[params.campaign_id], async (err,resu)=>{
-            callback(err,resu[0])
+        db.query("SELECT * FROM "+ process.env.DATABASE_CAMPAIGN_TABLE+" WHERE id_campaign =  ?" ,[params.campaign_id], async (err,resu)=>{
+            callback(err,resu)
         })
+    }
+    ,
+
+    insert(params,callback){
+        let campaignObj ={
+            id_brand : params.id_brand,
+            begin_date : params.begin_date,
+            end_date : params.end_date,
+            status : 1 ,
+            creation_date : new Date().getDate(),
+            //optional:
+            nbr_like : params.nbr_like,
+            nbr_share : params.nbr_share,
+            nbr_comment: params.nbr_comment,
+            price_like : params.price_like,
+            price_comment : params.price_comment,
+            price_share : params.price_share,
+            comment : params.comment,
+        }
+        db.query('INSERT into '+process.env.DATABASE_CAMPAIGN_TABLE+' SET ?',campaignObj,(err,resu)=>{
+        callback(err,campaignObj);
+    })
+    }
+    ,
+    delete(params,callback){
+        db.query('DELETE  FROM '+process.env.DATABASE_CAMPAIGN_TABLE+' WHERE id_campaign = '+ params,(err,resu)=>{
+            console.log(err);
+            callback(err,resu);
+         }); 
+
+    }
+    ,
+    update(params,id_campaign,callback){
+        console.log(id_campaign);
+        db.query('UPDATE '+process.env.DATABASE_CAMPAIGN_TABLE+' SET nbr_like = 1   WHERE id_campaign = ?',[id_campaign],(err,resu)=>{
+            console.log(resu);
+            callback(err,resu);
+        });
     }
 }
 module.exports = {

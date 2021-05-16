@@ -6,13 +6,15 @@ class ErrorHandler {
 }
 
 function handleError (err,req,res,next) {
-    var {status,message} = err;
+    var {status,message} = err ;
+
     if(status == 500) {
         console.log('[ERROR MIDDLEWARE] : ' + message  )
         console.trace();
-        message = "INTERNAL_SERER_ERROR"
+        message = "INTERNAL_SERVER_ERROR"
     }
-   return res.status(status).json({
+    
+   return res.status(status || 500).json({
         status : "Error",
         Code : status,
         message : message ,

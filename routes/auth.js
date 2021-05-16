@@ -45,13 +45,12 @@ router.post('/login',[check('email').isEmail()], async (req,res,next)=>{
         await db.user.queryEmail({email: req.body.email}, (err,resu)=>{
 
             if(err) return next(new ErrorHandler(500,err.message));
-            if(resu.length == 0) return next(new ErrorHandler(403,'INVALID_EMAIL'))
+            if(!resu) return next(new ErrorHandler(403,'INVALID_EMAIL'))
             
 
             if(!bcrypt.compareSync( req.body.user_password,resu.user_password)) {
                 return  next(new ErrorHandler(403,'INVALID_PASSWORD'))
             }
-
             const accessToken =  jwt.sign({ user_id :  resu.user_id, user_role : resu.user_role } , process.env.ACCESS_TOKEN_SECRET)
             res.status(201).json({"accessToken" : accessToken});
 

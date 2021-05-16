@@ -18,9 +18,10 @@ function authentificateToken (req,res,next) {
     jwt.verify(token,process.env.ACCESS_TOKEN_SECRET,(err,decoded)=>{
         if(err) return res.sendStatus(403)
         if(!decoded) return next(new ErrorHandler(401,"INVALID_TOKEN"))
+        console.log(decoded);
         req.body.user_id = decoded.user_id;
         req.body.user_role = decoded.user_role;
-
+        
         next()
     })
 }
