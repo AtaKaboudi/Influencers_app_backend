@@ -100,7 +100,7 @@ var campaign = {
             price_share : params.price_share,
             comment : params.comment,
         }
-        db.query('INSERT into '+process.env.DATABASE_CAMPAIGN_TABLE+' SET ?',campaignObj,(err,resu)=>{
+        db.query('INSERT into '+process.env.DATABASE_CAMPAIGN_TABLE+' SET ?',campaignObj,(err)=>{
         callback(err,campaignObj);
     })
     }
@@ -121,8 +121,37 @@ var campaign = {
         });
     }
 }
+
+
+var contact = {
+
+    getContact(contact_id,callback){
+        db.query('SELECT * FROM '+ process.env.DATABASE_CONTACT_TABLE+' WHERE compaign_id  = ? ',[contact_id],(err,resu)=>{
+            callback(err,resu);
+        })
+    }
+    ,
+    insertContact(params,callback){
+        db.query('INSERT INTO '+ process.env.DATABASE_CONTACT_TABLE+' SET ? ',params, (err,resu)=>{
+            callback(err,resu);
+        })
+    }
+    ,
+    delete(contact_id, callback){
+        db.query('DELETE  FROM '+process.env.DATABASE_CONTACT_TABLE+' WHERE contact_id = '+ contact_id,(err,resu)=>{
+            callback(err,resu);
+         }); 
+    }
+    ,
+    update(contact_id,params,callback){
+        db.query('UPDATE '+process.env.DATABASE_CONTACT_TABLE+' SET ? WHERE contact_id = ? ',[params,contact_id] ,(err,resu)=>{
+            callback(err,resu)
+        });
+    }
+}
 module.exports = {
     campaign,
     profile,
     user,
+    contact,
 }
